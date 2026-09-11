@@ -12,7 +12,7 @@
                           |___/                                         
 ```
 
-HeavyToolbox is an automated, portable cybersecurity orchestration console for Windows. It spins up a completely isolated, environment-aware workspace that dynamically maps industry-standard penetration testing tools into a localized sub-shell—without altering your system's permanent environment variables or cluttering your PATH.
+HeavyToolbox is an automated, portable cybersecurity orchestration console for Windows. It spins up a completely isolated, environment-aware workspace that dynamically maps industry-standard penetration testing tools into a localized sub-shell—without altering your system's permanent environment variables or cluttering your path profile.
 
 ---
 
@@ -23,7 +23,7 @@ Open PowerShell as **Administrator** and run this single pipeline to clone the f
 ```powershell
 git clone https://github.com; cd heavytoolbox; .\console.bat
 ```
-*(Inside the orchestrator menu, select option **11. Run All Installers** to watch the deployment engine automatically fetch, isolate, and unpack your complete toolkit).*
+*(Inside the orchestrator menu interface, select option **11. Run All Installers** to watch the Win32 graphical setup wizard dynamically configure your environment).*
 
 ---
 
@@ -35,7 +35,7 @@ The central console provides rapid, customized execution wrappers for:
 4. **Ffuf** - High-speed web fuzzing and directory brute-forcing
 5. **Netcat** - Port listening and raw shell catching
 6. **Tshark (Wireshark)** - Command-line packet capture and stream analysis
-7. **Metasploit Framework** - Exploitation console access placeholder
+7. **Metasploit Framework** - Full exploitation console access environment
 8. **MSFvenom Wizard** - Step-by-step interactive payload generation
 9. **Mimikatz** - Active privilege auditing wrapper *(Requires Admin)*
 10. **Sysinternals Prompt** - Rapid sandbox access to PsExec, ProcDump, and AccessChk
@@ -48,8 +48,6 @@ HeavyToolbox is built to be a living, evolving ecosystem. **This project will be
 * **Want a new tool added?** Open an Issue with your favorite tool name.
 * **Have a custom automation script?** Submit a Pull Request.
 * **Want a specific menu feature?** Let us know in the repository discussions.
-
-Your feedback directly decides what tools, features, and target workflows get implemented in the next deployment cycle!
 
 ---
 
