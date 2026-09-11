@@ -1,3 +1,11 @@
+# --- AUTOMATED ADMINISTRATOR ELEVATION CHECK ---
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if (-not $isAdmin) {
+    Write-Host "[*] Elevating credentials to configure system exclusions..." -ForegroundColor Yellow
+    Start-Process powershell -ArgumentList "-NoExit -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    Exit
+}
+
 # Force TLS 1.2 and modern engine configurations
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Add-Type -AssemblyName System.Windows.Forms
@@ -15,7 +23,7 @@ $Tools = "$Root\tools"
 
 # Programmatic Windows Defender Core Antivirus Exclusion Automation
 try {
-    Write-Host "[*] Adding local project footprint directory to Windows Defender exclusions..." -ForegroundColor Cyan
+    Write-Host "[+] Adding local project footprint directory to Windows Defender exclusions..." -ForegroundColor Green
     Add-MpPreference -ExclusionPath $Root -ErrorAction SilentlyContinue
 } catch {}
 
@@ -32,7 +40,7 @@ $Downloads = @(
 )
 $Sysinternals = @("PsExec.exe", "ProcDump.exe", "AccessChk.exe")
 
-# --- UI Setup (Win32 Classic Dimensions Layout Style) ---
+# --- UI Setup ---
 $Form = New-Object System.Windows.Forms.Form
 $Form.Text = "Suite Installer Wizard"
 $Form.Size = New-Object System.Drawing.Size(515, 390)
@@ -42,14 +50,12 @@ $Form.MaximizeBox = $false
 $Form.MinimizeBox = $false
 $Form.BackColor = [System.Drawing.Color]::White
 
-# Left Sidebar Panel Banner Accent Background
 $Sidebar = New-Object System.Windows.Forms.Panel
 $Sidebar.Size = New-Object System.Drawing.Size(165, 312)
 $Sidebar.Location = New-Object System.Drawing.Point(0, 0)
 $Sidebar.BackColor = [System.Drawing.Color]::FromArgb(10, 24, 110)
 $Form.Controls.Add($Sidebar)
 
-# Main Banner Text Container Room Block
 $MainContent = New-Object System.Windows.Forms.Panel
 $MainContent.Size = New-Object System.Drawing.Size(335, 312)
 $MainContent.Location = New-Object System.Drawing.Point(165, 0)
@@ -133,7 +139,8 @@ $BtnNext.Add_Click({
             $targetParent = Split-Path -Parent $item.Dest
             if (!(Test-Path $targetParent)) { New-Item -ItemType Directory -Path $targetParent -Force | Out-Null }
             
-            Invoke-WebRequest -Uri $item.Url -OutFile $item.Dest -UseBasicParsing
+            # Forced Infinite Timeout Setup (-TimeoutSec 0)
+            Invoke-WebRequest -Uri $item.Url -OutFile $item.Dest -UseBasicParsing -TimeoutSec 0
             
             if ($item.Dest.EndsWith(".zip")) {
                 $StatusLabel.Text = "Extracting $($item.Name)..."
@@ -171,11 +178,11 @@ $BtnNext.Add_Click({
         (Get-Content $pthFile) | ForEach-Object { $_ -replace '#import site', 'import site' } | Set-Content $pthFile
     }
     
-    # Download Sysinternals dependencies
+    # Download Sysinternals dependencies (Forced Infinite Timeout)
     $StatusLabel.Text = "Downloading Sysinternals binaries..."
     [System.Windows.Forms.Application]::DoEvents()
     foreach ($bin in $Sysinternals) {
-        try { Invoke-WebRequest -Uri "https://sysinternals.com" -OutFile "$Tools\sysinternals\$bin" -UseBasicParsing } catch {}
+        try { Invoke-WebRequest -Uri "https://sysinternals.com" -OutFile "$Tools\sysinternals\$bin" -UseBasicParsing -TimeoutSec 0 } catch {}
     }
     
     $StatusLabel.Text = "All installations fully deployed!"
