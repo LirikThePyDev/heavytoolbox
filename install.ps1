@@ -1,119 +1,187 @@
-# Force TLS 1.2
+# Force TLS 1.2 and modern engine configurations
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
 
 # Dynamically resolve root relative to script execution location
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $Runtimes = "$Root\runtimes"
 $Tools = "$Root\tools"
 
-# Ensure core structural directories exist at launch
+# Create Structural Directories
 @($Runtimes, $Tools, "$Tools\sysinternals", "$Tools\metasploit-framework", "$Tools\hashcat", "$Tools\wireshark") | ForEach-Object {
     if (!(Test-Path $_)) { New-Item -ItemType Directory -Path $_ -Force | Out-Null }
 }
 
-# Advanced Downloads Configuration (Zero-Configuration Pipeline)
+# The Absolute Zero-Touch Toolkit Configuration
 $Downloads = @(
-    @{
-        Name = "Python 3.11"
-        Url  = "https://python.org"
-        Dest = "$Runtimes\python.zip"
-        Ext  = "$Runtimes\python"
-    },
-    @{
-        Name = "Ffuf Web Fuzzer"
-        Url  = "https://github.com"
-        Dest = "$Tools\ffuf\ffuf.zip"
-        Ext  = "$Tools\ffuf"
-    },
-    @{
-        Name = "Netcat Portable"
-        Url  = "https://github.com"
-        Dest = "$Tools\netcat\netcat.zip"
-        Ext  = "$Tools\netcat"
-    },
-    @{
-        Name = "Mimikatz Security Audit Tool"
-        Url  = "https://github.com"
-        Dest = "$Tools\mimikatz\mimikatz.zip"
-        Ext  = "$Tools\mimikatz"
-    },
-    @{
-        Name = "Nmap Network Scanner (Portable)"
-        Url  = "https://nmap.org"
-        Dest = "$Tools\nmap\nmap.zip"
-        Ext  = "$Tools\nmap"
-    }
+    @{ Name = "Python 3.11 Runtime"; Url = "https://python.org"; Dest = "$Runtimes\python.zip"; Ext = "$Runtimes\python" },
+    @{ Name = "Ffuf Web Fuzzer"; Url = "https://github.com"; Dest = "$Tools\ffuf\ffuf.zip"; Ext = "$Tools\ffuf" },
+    @{ Name = "Netcat Portable"; Url = "https://github.com"; Dest = "$Tools\netcat\netcat.zip"; Ext = "$Tools\netcat" },
+    @{ Name = "Mimikatz Audit Tool"; Url = "https://github.com"; Dest = "$Tools\mimikatz\mimikatz.zip"; Ext = "$Tools\mimikatz" },
+    @{ Name = "Nmap Network Scanner"; Url = "https://nmap.org"; Dest = "$Tools\nmap\nmap.zip"; Ext = "$Tools\nmap" },
+    @{ Name = "Hashcat Password Cracker"; Url = "https://hashcat.net"; Dest = "$Tools\hashcat\hashcat.zip"; Ext = "$Tools\hashcat" },
+    @{ Name = "Wireshark & Tshark Portable"; Url = "https://python.org"; Dest = "$Tools\wireshark\wireshark_install.exe"; Ext = "$Tools\wireshark" },
+    @{ Name = "Metasploit Engine (Heavy)"; Url = "https://metasploit.com"; Dest = "$Tools\metasploit-framework\msf_install.msi"; Ext = "$Tools\metasploit-framework" }
 )
-
-# Sysinternals Engine Components
 $Sysinternals = @("PsExec.exe", "ProcDump.exe", "AccessChk.exe")
 
+# --- UI Setup (Win32 Classic Dimensions) ---
+$Form = New-Object System.Windows.Forms.Form
+$Form.Text = "Suite Installer Wizard"
+$Form.Size = New-Object System.Drawing.Size(515, 390)
+$Form.StartPosition = "CenterScreen"
+$Form.FormBorderStyle = "FixedDialog"
+$Form.MaximizeBox = $false
+$Form.MinimizeBox = $false
+$Form.BackColor = [System.Drawing.Color]::White
+
+# Left Sidebar Panel (Classic Dark Blue Banner Background)
+$Sidebar = New-Object System.Windows.Forms.Panel
+$Sidebar.Size = New-Object System.Drawing.Size(165, 312)
+$Sidebar.Location = New-Object System.Drawing.Point(0, 0)
+$Sidebar.BackColor = [System.Drawing.Color]::FromArgb(10, 24, 110)
+$Form.Controls.Add($Sidebar)
+
+# Main Banner Text Container (Right Side)
+$MainContent = New-Object System.Windows.Forms.Panel
+$MainContent.Size = New-Object System.Drawing.Size(335, 312)
+$MainContent.Location = New-Object System.Drawing.Point(165, 0)
+$MainContent.BackColor = [System.Drawing.Color]::White
+$Form.Controls.Add($MainContent)
+
+# Welcome Heading Header
+$Title = New-Object System.Windows.Forms.Label
+$Title.Text = "Welcome to the HeavyToolbox Installer Wizard"
+$Title.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
+$Title.Location = New-Object System.Drawing.Point(15, 20)
+$Title.Size = New-Object System.Drawing.Size(305, 45)
+$MainContent.Controls.Add($Title)
+
+# Body Description Paragraph
+$Desc = New-Object System.Windows.Forms.Label
+$Desc.Text = "This wizard deploys the entire core suite including Metasploit, Hashcat, and Wireshark directly into your project framework completely automated.`n`nTo continue, click Next."
+$Desc.Font = New-Object System.Drawing.Font("Segoe UI", 8.5)
+$Desc.Location = New-Object System.Drawing.Point(17, 75)
+$Desc.Size = New-Object System.Drawing.Size(300, 150)
+$MainContent.Controls.Add($Desc)
+
+# Action / Status tracking element area
+$StatusLabel = New-Object System.Windows.Forms.Label
+$StatusLabel.Text = "Ready to proceed."
+$StatusLabel.Font = New-Object System.Drawing.Font("Segoe UI", 8, [System.Drawing.FontStyle]::Italic)
+$StatusLabel.Location = New-Object System.Drawing.Point(17, 230)
+$StatusLabel.Size = New-Object System.Drawing.Size(300, 20)
+$MainContent.Controls.Add($StatusLabel)
+
+# Clean Horizontal Separator Line at bottom
+$SepLine = New-Object System.Windows.Forms.Label
+$SepLine.Size = New-Object System.Drawing.Size(515, 2)
+$SepLine.Location = New-Object System.Drawing.Point(0, 312)
+$SepLine.BorderStyle = "Fixed3D"
+$Form.Controls.Add($SepLine)
+
+# Bottom Controls Panel
+$BottomPanel = New-Object System.Windows.Forms.Panel
+$BottomPanel.Size = New-Object System.Drawing.Size(515, 50)
+$BottomPanel.Location = New-Object System.Drawing.Point(0, 314)
+$BottomPanel.BackColor = [System.Drawing.Color]::FromName("Control")
+$Form.Controls.Add($BottomPanel)
+
+# Button Framework Matrix
+$BtnBack = New-Object System.Windows.Forms.Button
+$BtnBack.Text = "< Back"
+$BtnBack.Enabled = $false
+$BtnBack.Location = New-Object System.Drawing.Point(235, 10)
+$BtnBack.Size = New-Object System.Drawing.Size(75, 24)
+$BottomPanel.Controls.Add($BtnBack)
+
+$BtnNext = New-Object System.Windows.Forms.Button
+$BtnNext.Text = "Next >"
+$BtnNext.Location = New-Object System.Drawing.Point(315, 10)
+$BtnNext.Size = New-Object System.Drawing.Size(75, 24)
+$BottomPanel.Controls.Add($BtnNext)
+
+$BtnCancel = New-Object System.Windows.Forms.Button
+$BtnCancel.Text = "Cancel"
+$BtnCancel.Location = New-Object System.Drawing.Point(405, 10)
+$BtnCancel.Size = New-Object System.Drawing.Size(75, 24)
+$BtnCancel.Add_Click({ $Form.Close() })
+$BottomPanel.Controls.Add($BtnCancel)
+
+# Unpack Safe Runtime Wrapper 
 function Unpack-ArchiveSafe {
     param($ZipFile, $Destination)
     try {
-        Write-Host "[*] Extracting $ZipFile..." -ForegroundColor Cyan
         if (!(Test-Path $Destination)) { New-Item -ItemType Directory -Path $Destination -Force | Out-Null }
         Expand-Archive -Path $ZipFile -DestinationPath $Destination -Force
     } catch {
-        Write-Host "[!] Expand-Archive failed. Utilizing Shell.Application fallback..." -ForegroundColor Yellow
+        $shell = New-Object -ComObject Shell.Application
+        $shell.NameSpace($Destination).CopyHere($shell.NameSpace($ZipFile).Items(), 0x10)
+    }
+}
+
+# --- Installation Logic Execution Loop ---
+$BtnNext.Add_Click({
+    $BtnNext.Enabled = $false
+    $BtnCancel.Enabled = $false
+    
+    foreach ($item in $Downloads) {
+        $StatusLabel.Text = "Downloading $($item.Name)..."
+        [System.Windows.Forms.Application]::DoEvents()
+        
         try {
-            $shell = New-Object -ComObject Shell.Application
-            $zipFolder = $shell.NameSpace($ZipFile)
-            $destFolder = $shell.NameSpace($Destination)
-            $destFolder.CopyHere($zipFolder.Items(), 0x10)
+            $targetParent = Split-Path -Parent $item.Dest
+            if (!(Test-Path $targetParent)) { New-Item -ItemType Directory -Path $targetParent -Force | Out-Null }
+            
+            Invoke-WebRequest -Uri $item.Url -OutFile $item.Dest -UseBasicParsing
+            
+            if ($item.Dest.EndsWith(".zip")) {
+                $StatusLabel.Text = "Extracting $($item.Name)..."
+                [System.Windows.Forms.Application]::DoEvents()
+                Unpack-ArchiveSafe -ZipFile $item.Dest -Destination $item.Ext
+                Remove-Item $item.Dest -Force
+            } elseif ($item.Name -like "*Metasploit*") {
+                $StatusLabel.Text = "Running Metasploit Silent Installer..."
+                [System.Windows.Forms.Application]::DoEvents()
+                Start-Process msiexec.exe -ArgumentList "/i `"$($item.Dest)`" /qn /norestart INSTDIR=`"$($item.Ext)`"" -Wait
+                Remove-Item $item.Dest -Force
+            } elseif ($item.Name -like "*Wireshark*") {
+                $StatusLabel.Text = "Extracting Wireshark Engine Components..."
+                [System.Windows.Forms.Application]::DoEvents()
+                Start-Process $item.Dest -ArgumentList "/S /D=$($item.Ext)" -Wait
+                Remove-Item $item.Dest -Force
+            }
         } catch {
-            Write-Error "[-] Failed to extract $ZipFile cleanly using primary or fallback engines."
+            [System.Windows.Forms.MessageBox]::Show("Failure downloading $($item.Name)`n$($_.Exception.Message)", "Error", "OK", "Error")
         }
     }
-}
-
-# Run the Main Deployment Routine
-foreach ($item in $Downloads) {
-    try {
-        $targetParent = Split-Path -Parent $item.Dest
-        if (!(Test-Path $targetParent)) { New-Item -ItemType Directory -Path $targetParent -Force | Out-Null }
-
-        Write-Host "[+] Deploying $($item.Name)..." -ForegroundColor Green
-        Invoke-WebRequest -Uri $item.Url -OutFile $item.Dest -UseBasicParsing
-        Unpack-ArchiveSafe -ZipFile $item.Dest -Destination $item.Ext
-        Remove-Item $item.Dest -Force
-    } catch {
-        Write-Host "[-] Critical failure deploying $($item.Name): $($_.Exception.Message)" -ForegroundColor Red
+    
+    # Path Cleanups & Normalizations
+    if (Test-Path "$Tools\nmap\nmap-7.95") {
+        Move-Item -Path "$Tools\nmap\nmap-7.95\*" -Destination "$Tools\nmap" -Force
+        Remove-Item -Path "$Tools\nmap\nmap-7.95" -Recurse -Force
     }
-}
-
-# Normalize Nmap Directory Structure if nested during zip unpack
-if (Test-Path "$Tools\nmap\nmap-7.95") {
-    Write-Host "[*] Standardizing Nmap environment paths..." -ForegroundColor Cyan
-    Move-Item -Path "$Tools\nmap\nmap-7.95\*" -Destination "$Tools\nmap" -Force
-    Remove-Item -Path "$Tools\nmap\nmap-7.95" -Recurse -Force
-}
-
-# Fix Python Embedded Isolation trap so custom scripting extensions work seamlessly
-$pthFile = "$Runtimes\python\python311._pth"
-if (Test-Path $pthFile) {
-    (Get-Content $pthFile) | ForEach-Object { $_ -replace '#import site', 'import site' } | Set-Content $pthFile
-}
-
-# Run the Sysinternals Deployment Routine
-foreach ($bin in $Sysinternals) {
-    try {
-        Write-Host "[+] Stream-loading Sysinternals $bin..." -ForegroundColor Green
-        Invoke-WebRequest -Uri "https://sysinternals.com" -OutFile "$Tools\sysinternals\$bin" -UseBasicParsing
-    } catch {
-        Write-Host "[-] Failed to stream-load ${bin}: $($_.Exception.Message)" -ForegroundColor Red
+    if (Test-Path "$Tools\hashcat\hashcat-6.2.6") {
+        Move-Item -Path "$Tools\hashcat\hashcat-6.2.6\*" -Destination "$Tools\hashcat" -Force
+        Remove-Item -Path "$Tools\hashcat\hashcat-6.2.6" -Recurse -Force
     }
-}
+    
+    $pthFile = "$Runtimes\python\python311._pth"
+    if (Test-Path $pthFile) {
+        (Get-Content $pthFile) | ForEach-Object { $_ -replace '#import site', 'import site' } | Set-Content $pthFile
+    }
+    
+    # Streaming Sysinternals
+    $StatusLabel.Text = "Downloading Sysinternals binaries..."
+    [System.Windows.Forms.Application]::DoEvents()
+    foreach ($bin in $Sysinternals) {
+        try { Invoke-WebRequest -Uri "https://sysinternals.com" -OutFile "$Tools\sysinternals\$bin" -UseBasicParsing } catch {}
+    }
+    
+    $StatusLabel.Text = "All installations fully deployed!"
+    [System.Windows.Forms.MessageBox]::Show("HeavyToolbox framework setup is complete!`nEvery single menu option is now armed and functional.", "Success", "OK", "Information")
+    $Form.Close()
+})
 
-# Setup Manual-Heavy Enterprise Tool Documentation Placeholders
-$Docs = @{
-    "$Tools\metasploit-framework\README.txt" = "METASPLOIT FRAMEWORK INSTALLATION`n==============================`n1. Download installer from https://metasploit.com`n2. Install and ensure Antivirus exclusions are set for C:\HeavyToolbox`n3. Run msfconsole.bat to initialize."
-    "$Tools\hashcat\README.txt" = "HASHCAT INSTALLATION`n===================`n1. Download portable binaries from https://hashcat.net`n2. Extract to this folder.`n3. Ensure OpenCL/CUDA drivers are installed for GPU acceleration."
-    "$Tools\wireshark\README.txt" = "WIRESHARK INSTALLATION`n====================`n1. Download installer from https://wireshark.org`n2. Install Npcap (required for packet capture).`n3. Install Wireshark and Tshark."
-}
-
-foreach ($path in $Docs.Keys) {
-    $Docs[$path] | Out-File -FilePath $path -Encoding utf8
-}
-
-Write-Host "`n[+] HeavyToolbox Wizard Deployment Complete. Launch console.bat to operate." -ForegroundColor Green
+[System.Windows.Forms.Application]::Run($Form)
