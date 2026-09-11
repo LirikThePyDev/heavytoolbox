@@ -1,84 +1,119 @@
 # Force TLS 1.2
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$Root = "C:\HeavyToolbox"
+# Dynamically resolve root relative to script execution location
+$Root = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $Runtimes = "$Root\runtimes"
 $Tools = "$Root\tools"
 
-# Downloads Configuration
+# Ensure core structural directories exist at launch
+@($Runtimes, $Tools, "$Tools\sysinternals", "$Tools\metasploit-framework", "$Tools\hashcat", "$Tools\wireshark") | ForEach-Object {
+    if (!(Test-Path $_)) { New-Item -ItemType Directory -Path $_ -Force | Out-Null }
+}
+
+# Advanced Downloads Configuration (Zero-Configuration Pipeline)
 $Downloads = @(
     @{
-        Url = "https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip"
+        Name = "Python 3.11"
+        Url  = "https://python.org"
         Dest = "$Runtimes\python.zip"
-        ExtractTo = "$Runtimes\python"
+        Ext  = "$Runtimes\python"
     },
     @{
-        Url = "https://github.com/ffuf/ffuf/releases/download/v2.1.0/ffuf_2.1.0_windows_amd64.zip"
+        Name = "Ffuf Web Fuzzer"
+        Url  = "https://github.com"
         Dest = "$Tools\ffuf\ffuf.zip"
-        ExtractTo = "$Tools\ffuf"
+        Ext  = "$Tools\ffuf"
     },
     @{
-        Url = "https://github.com/andrew-d-cole/netcat-portable/releases/download/v1.0/netcat.zip"
+        Name = "Netcat Portable"
+        Url  = "https://github.com"
         Dest = "$Tools\netcat\netcat.zip"
-        ExtractTo = "$Tools\netcat"
+        Ext  = "$Tools\netcat"
+    },
+    @{
+        Name = "Mimikatz Security Audit Tool"
+        Url  = "https://github.com"
+        Dest = "$Tools\mimikatz\mimikatz.zip"
+        Ext  = "$Tools\mimikatz"
+    },
+    @{
+        Name = "Nmap Network Scanner (Portable)"
+        Url  = "https://nmap.org"
+        Dest = "$Tools\nmap\nmap.zip"
+        Ext  = "$Tools\nmap"
     }
 )
 
-# Sysinternals Direct Downloads
-$Sysinternals = @(
-    "PsExec.exe", "ProcDump.exe", "AccessChk.exe"
-)
+# Sysinternals Engine Components
+$Sysinternals = @("PsExec.exe", "ProcDump.exe", "AccessChk.exe")
 
 function Unpack-ArchiveSafe {
     param($ZipFile, $Destination)
     try {
-        Write-Host "Extracting $ZipFile to $Destination..." -ForegroundColor Cyan
-        if (!(Test-Path $Destination)) { New-Item -ItemType Directory -Path $Destination -Force }
+        Write-Host "[*] Extracting $ZipFile..." -ForegroundColor Cyan
+        if (!(Test-Path $Destination)) { New-Item -ItemType Directory -Path $Destination -Force | Out-Null }
         Expand-Archive -Path $ZipFile -DestinationPath $Destination -Force
     } catch {
-        Write-Host "Expand-Archive failed. Falling back to Shell.Application COM object..." -ForegroundColor Yellow
+        Write-Host "[!] Expand-Archive failed. Utilizing Shell.Application fallback..." -ForegroundColor Yellow
         try {
             $shell = New-Object -ComObject Shell.Application
             $zipFolder = $shell.NameSpace($ZipFile)
             $destFolder = $shell.NameSpace($Destination)
             $destFolder.CopyHere($zipFolder.Items(), 0x10)
         } catch {
-            Write-Error "Failed to extract $ZipFile using all methods."
+            Write-Error "[-] Failed to extract $ZipFile cleanly using primary or fallback engines."
         }
     }
 }
 
-# Process Main Downloads
+# Run the Main Deployment Routine
 foreach ($item in $Downloads) {
     try {
-        Write-Host "Downloading $($item.Url)..." -ForegroundColor Cyan
+        $targetParent = Split-Path -Parent $item.Dest
+        if (!(Test-Path $targetParent)) { New-Item -ItemType Directory -Path $targetParent -Force | Out-Null }
+
+        Write-Host "[+] Deploying $($item.Name)..." -ForegroundColor Green
         Invoke-WebRequest -Uri $item.Url -OutFile $item.Dest -UseBasicParsing
-        Unpack-ArchiveSafe -ZipFile $item.Dest -Destination $item.ExtractTo
+        Unpack-ArchiveSafe -ZipFile $item.Dest -Destination $item.Ext
         Remove-Item $item.Dest -Force
     } catch {
-        Write-Host "Failed to process $($item.Url) - $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "[-] Critical failure deploying $($item.Name): $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
-# Process Sysinternals
+# Normalize Nmap Directory Structure if nested during zip unpack
+if (Test-Path "$Tools\nmap\nmap-7.95") {
+    Write-Host "[*] Standardizing Nmap environment paths..." -ForegroundColor Cyan
+    Move-Item -Path "$Tools\nmap\nmap-7.95\*" -Destination "$Tools\nmap" -Force
+    Remove-Item -Path "$Tools\nmap\nmap-7.95" -Recurse -Force
+}
+
+# Fix Python Embedded Isolation trap so custom scripting extensions work seamlessly
+$pthFile = "$Runtimes\python\python311._pth"
+if (Test-Path $pthFile) {
+    (Get-Content $pthFile) | ForEach-Object { $_ -replace '#import site', 'import site' } | Set-Content $pthFile
+}
+
+# Run the Sysinternals Deployment Routine
 foreach ($bin in $Sysinternals) {
     try {
-        Write-Host "Downloading Sysinternals $bin..." -ForegroundColor Cyan
-        Invoke-WebRequest -Uri "https://sysinternals.com/$bin" -OutFile "$Tools\sysinternals\$bin" -UseBasicParsing
+        Write-Host "[+] Stream-loading Sysinternals $bin..." -ForegroundColor Green
+        Invoke-WebRequest -Uri "https://sysinternals.com" -OutFile "$Tools\sysinternals\$bin" -UseBasicParsing
     } catch {
-        Write-Host "Failed to download ${bin} - $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "[-] Failed to stream-load ${bin}: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
-# Setup Documentation Placeholders
+# Setup Manual-Heavy Enterprise Tool Documentation Placeholders
 $Docs = @{
-    "$Tools\metasploit-framework\README.txt" = "METASPLOIT FRAMEWORK INSTALLATION`n==============================`n1. Download installer from https://www.metasploit.com/download`n2. Install and ensure Antivirus exclusions are set for C:\HeavyToolbox`n3. Run msfconsole.bat to initialize."
-    "$Tools\hashcat\README.txt" = "HASHCAT INSTALLATION`n===================`n1. Download portable binaries from https://hashcat.net/hashcat/`n2. Extract to this folder.`n3. Ensure OpenCL/CUDA drivers are installed for GPU acceleration."
-    "$Tools\wireshark\README.txt" = "WIRESHARK INSTALLATION`n====================`n1. Download installer from https://www.wireshark.org/download.html`n2. Install Npcap (required for packet capture).`n3. Install Wireshark and Tshark."
+    "$Tools\metasploit-framework\README.txt" = "METASPLOIT FRAMEWORK INSTALLATION`n==============================`n1. Download installer from https://metasploit.com`n2. Install and ensure Antivirus exclusions are set for C:\HeavyToolbox`n3. Run msfconsole.bat to initialize."
+    "$Tools\hashcat\README.txt" = "HASHCAT INSTALLATION`n===================`n1. Download portable binaries from https://hashcat.net`n2. Extract to this folder.`n3. Ensure OpenCL/CUDA drivers are installed for GPU acceleration."
+    "$Tools\wireshark\README.txt" = "WIRESHARK INSTALLATION`n====================`n1. Download installer from https://wireshark.org`n2. Install Npcap (required for packet capture).`n3. Install Wireshark and Tshark."
 }
 
 foreach ($path in $Docs.Keys) {
     $Docs[$path] | Out-File -FilePath $path -Encoding utf8
 }
 
-Write-Host "Installation process completed." -ForegroundColor Green
+Write-Host "`n[+] HeavyToolbox Wizard Deployment Complete. Launch console.bat to operate." -ForegroundColor Green
