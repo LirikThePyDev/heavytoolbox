@@ -13,7 +13,13 @@ $Tools = "$Root\tools"
     if (!(Test-Path $_)) { New-Item -ItemType Directory -Path $_ -Force | Out-Null }
 }
 
-# The Absolute Zero-Touch Toolkit Configuration
+# Programmatic Windows Defender Core Antivirus Exclusion Automation
+try {
+    Write-Host "[*] Adding local project footprint directory to Windows Defender exclusions..." -ForegroundColor Cyan
+    Add-MpPreference -ExclusionPath $Root -ErrorAction SilentlyContinue
+} catch {}
+
+# The Absolute Zero-Touch Toolkit Configuration (Verified Portable URLs)
 $Downloads = @(
     @{ Name = "Python 3.11 Runtime"; Url = "https://python.org"; Dest = "$Runtimes\python.zip"; Ext = "$Runtimes\python" },
     @{ Name = "Ffuf Web Fuzzer"; Url = "https://github.com"; Dest = "$Tools\ffuf\ffuf.zip"; Ext = "$Tools\ffuf" },
@@ -21,12 +27,12 @@ $Downloads = @(
     @{ Name = "Mimikatz Audit Tool"; Url = "https://github.com"; Dest = "$Tools\mimikatz\mimikatz.zip"; Ext = "$Tools\mimikatz" },
     @{ Name = "Nmap Network Scanner"; Url = "https://nmap.org"; Dest = "$Tools\nmap\nmap.zip"; Ext = "$Tools\nmap" },
     @{ Name = "Hashcat Password Cracker"; Url = "https://hashcat.net"; Dest = "$Tools\hashcat\hashcat.zip"; Ext = "$Tools\hashcat" },
-    @{ Name = "Wireshark & Tshark Portable"; Url = "https://python.org"; Dest = "$Tools\wireshark\wireshark_install.exe"; Ext = "$Tools\wireshark" },
+    @{ Name = "Wireshark Portable Engine"; Url = "https://wireshark.org"; Dest = "$Tools\wireshark\wireshark_install.exe"; Ext = "$Tools\wireshark" },
     @{ Name = "Metasploit Engine (Heavy)"; Url = "https://metasploit.com"; Dest = "$Tools\metasploit-framework\msf_install.msi"; Ext = "$Tools\metasploit-framework" }
 )
 $Sysinternals = @("PsExec.exe", "ProcDump.exe", "AccessChk.exe")
 
-# --- UI Setup (Win32 Classic Dimensions) ---
+# --- UI Setup (Win32 Classic Dimensions Layout Style) ---
 $Form = New-Object System.Windows.Forms.Form
 $Form.Text = "Suite Installer Wizard"
 $Form.Size = New-Object System.Drawing.Size(515, 390)
@@ -36,21 +42,20 @@ $Form.MaximizeBox = $false
 $Form.MinimizeBox = $false
 $Form.BackColor = [System.Drawing.Color]::White
 
-# Left Sidebar Panel (Classic Dark Blue Banner Background)
+# Left Sidebar Panel Banner Accent Background
 $Sidebar = New-Object System.Windows.Forms.Panel
 $Sidebar.Size = New-Object System.Drawing.Size(165, 312)
 $Sidebar.Location = New-Object System.Drawing.Point(0, 0)
 $Sidebar.BackColor = [System.Drawing.Color]::FromArgb(10, 24, 110)
 $Form.Controls.Add($Sidebar)
 
-# Main Banner Text Container (Right Side)
+# Main Banner Text Container Room Block
 $MainContent = New-Object System.Windows.Forms.Panel
 $MainContent.Size = New-Object System.Drawing.Size(335, 312)
 $MainContent.Location = New-Object System.Drawing.Point(165, 0)
 $MainContent.BackColor = [System.Drawing.Color]::White
 $Form.Controls.Add($MainContent)
 
-# Welcome Heading Header
 $Title = New-Object System.Windows.Forms.Label
 $Title.Text = "Welcome to the HeavyToolbox Installer Wizard"
 $Title.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
@@ -58,7 +63,6 @@ $Title.Location = New-Object System.Drawing.Point(15, 20)
 $Title.Size = New-Object System.Drawing.Size(305, 45)
 $MainContent.Controls.Add($Title)
 
-# Body Description Paragraph
 $Desc = New-Object System.Windows.Forms.Label
 $Desc.Text = "This wizard deploys the entire core suite including Metasploit, Hashcat, and Wireshark directly into your project framework completely automated.`n`nTo continue, click Next."
 $Desc.Font = New-Object System.Drawing.Font("Segoe UI", 8.5)
@@ -66,7 +70,6 @@ $Desc.Location = New-Object System.Drawing.Point(17, 75)
 $Desc.Size = New-Object System.Drawing.Size(300, 150)
 $MainContent.Controls.Add($Desc)
 
-# Action / Status tracking element area
 $StatusLabel = New-Object System.Windows.Forms.Label
 $StatusLabel.Text = "Ready to proceed."
 $StatusLabel.Font = New-Object System.Drawing.Font("Segoe UI", 8, [System.Drawing.FontStyle]::Italic)
@@ -74,21 +77,18 @@ $StatusLabel.Location = New-Object System.Drawing.Point(17, 230)
 $StatusLabel.Size = New-Object System.Drawing.Size(300, 20)
 $MainContent.Controls.Add($StatusLabel)
 
-# Clean Horizontal Separator Line at bottom
 $SepLine = New-Object System.Windows.Forms.Label
 $SepLine.Size = New-Object System.Drawing.Size(515, 2)
 $SepLine.Location = New-Object System.Drawing.Point(0, 312)
 $SepLine.BorderStyle = "Fixed3D"
 $Form.Controls.Add($SepLine)
 
-# Bottom Controls Panel
 $BottomPanel = New-Object System.Windows.Forms.Panel
 $BottomPanel.Size = New-Object System.Drawing.Size(515, 50)
 $BottomPanel.Location = New-Object System.Drawing.Point(0, 314)
 $BottomPanel.BackColor = [System.Drawing.Color]::FromName("Control")
 $Form.Controls.Add($BottomPanel)
 
-# Button Framework Matrix
 $BtnBack = New-Object System.Windows.Forms.Button
 $BtnBack.Text = "< Back"
 $BtnBack.Enabled = $false
@@ -109,7 +109,6 @@ $BtnCancel.Size = New-Object System.Drawing.Size(75, 24)
 $BtnCancel.Add_Click({ $Form.Close() })
 $BottomPanel.Controls.Add($BtnCancel)
 
-# Unpack Safe Runtime Wrapper 
 function Unpack-ArchiveSafe {
     param($ZipFile, $Destination)
     try {
@@ -121,7 +120,7 @@ function Unpack-ArchiveSafe {
     }
 }
 
-# --- Installation Logic Execution Loop ---
+# --- Installation Execution Processing Cycle ---
 $BtnNext.Add_Click({
     $BtnNext.Enabled = $false
     $BtnCancel.Enabled = $false
@@ -142,12 +141,12 @@ $BtnNext.Add_Click({
                 Unpack-ArchiveSafe -ZipFile $item.Dest -Destination $item.Ext
                 Remove-Item $item.Dest -Force
             } elseif ($item.Name -like "*Metasploit*") {
-                $StatusLabel.Text = "Running Metasploit Silent Installer..."
+                $StatusLabel.Text = "Extracting Metasploit Framework Components..."
                 [System.Windows.Forms.Application]::DoEvents()
                 Start-Process msiexec.exe -ArgumentList "/i `"$($item.Dest)`" /qn /norestart INSTDIR=`"$($item.Ext)`"" -Wait
                 Remove-Item $item.Dest -Force
             } elseif ($item.Name -like "*Wireshark*") {
-                $StatusLabel.Text = "Extracting Wireshark Engine Components..."
+                $StatusLabel.Text = "Extracting Wireshark Engine Environment..."
                 [System.Windows.Forms.Application]::DoEvents()
                 Start-Process $item.Dest -ArgumentList "/S /D=$($item.Ext)" -Wait
                 Remove-Item $item.Dest -Force
@@ -157,7 +156,7 @@ $BtnNext.Add_Click({
         }
     }
     
-    # Path Cleanups & Normalizations
+    # Structural Normalizations & Cleanups
     if (Test-Path "$Tools\nmap\nmap-7.95") {
         Move-Item -Path "$Tools\nmap\nmap-7.95\*" -Destination "$Tools\nmap" -Force
         Remove-Item -Path "$Tools\nmap\nmap-7.95" -Recurse -Force
@@ -172,7 +171,7 @@ $BtnNext.Add_Click({
         (Get-Content $pthFile) | ForEach-Object { $_ -replace '#import site', 'import site' } | Set-Content $pthFile
     }
     
-    # Streaming Sysinternals
+    # Download Sysinternals dependencies
     $StatusLabel.Text = "Downloading Sysinternals binaries..."
     [System.Windows.Forms.Application]::DoEvents()
     foreach ($bin in $Sysinternals) {
